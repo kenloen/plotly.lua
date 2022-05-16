@@ -5,9 +5,15 @@ plotly = {}
 plotly.cdn_str = "<script src='https://cdn.plot.ly/plotly-2.9.0.min.js'></script>"
 plotly.header = ""
 plotly.body = ""
+plotly.div_id = "plot"
 
--- Convert data, layout and config to JSON string
-function tostring(data, layout, config, html_id)
+
+---Convert data, layout and config tables to HTML string
+---@param data table 
+---@param layout table 
+---@param config table
+---@return string
+function tostring(data, layout, config)
     -- Convert data to json
     data_str = json.encode (data)
     layout_str = layout and json.encode (layout) or "{}"
@@ -17,7 +23,6 @@ function tostring(data, layout, config, html_id)
     header = "<head>\n"..plotly.cdn_str.."\n"..plotly.header.."\n</head>\n"
 
     -- Create body tags
-    if html_id == nil then html_id = "plot" end
     body = [[<body>
     <div id='%s'></div>
     <script type="text/javascript">
@@ -28,25 +33,39 @@ function tostring(data, layout, config, html_id)
     </script>
     </body>
     ]]
-    body = string.format(body, html_id, data_str, layout_str, config_str, html_id)
+    body = string.format(body, plotly.div_id, data_str, layout_str, config_str, plotly.div_id)
 
 
     return header..body
 end
 
-function tofile(filename, data, layout, config, html_id)
-    html_str = tostring(data, layout, config, html_id)
-    file = io.open(filename, "w")    
+---Writes an HTML file with data, layout and config tables similar to input for plotly.js
+---@param data table 
+---@param layout table 
+---@param config table
+---@param filename string
+---@return string
+function tofile(filename, data, layout, config)
+    html_str = tostring(data, layout, config)
+    file = io.open(filename, "w")
     file:write(html_str)
     file:close()
 end
 
-function show(data, layout, config, filename, html_id)
+sleep_time = 1
+---Opens a plot in the browser with data, layout and config tables similar to input for plotly.js.
+---If no file name is given it will write to a file named "_temp.html" and open it in the browser and delete it after 1 secound.
+---@param data table 
+---@param layout table 
+---@param config table 
+---@param filename string
+---@return string
+function show(data, layout, config, filename)
     if not filename then filename = "_temp.html" end
-    tofile(filename, data, layout, config, html_id)
+    tofile(filename, data, layout, config)
     open_url(filename)
     if filename == "_temp.html" then
-        sleep(1)
+        sleep(sleep_time)
         os.remove(filename)
     end
 end
