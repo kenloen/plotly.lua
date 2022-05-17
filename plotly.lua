@@ -76,12 +76,75 @@ end
 -- Figure metatable
 local figure = {}
 
+---Adding a trace for the figure. All options can be found here: https://plotly.com/javascript/reference/index/
+---Easy to call like: figure:add_trace{x=x, y=y, ...}
+---@param trace table
 function figure.add_trace(self, trace)
     self["data"][#self["data"]+1] = trace
 end
 
-function figure.plot(self, args)
-    
+local dash_style = {["-"] = "solid", [":"] = "dot", ["--"] = "dash"}
+local mode_shorthand = {["m"] = "markers", ["l"]="lines", ["m+l"]="lines+markers", ["l+m"]="lines+markers"}
+
+---Adding a trace for the figure with shorthand for common options (similar to matlab or matplotlib). 
+---All js options can be found here: https://plotly.com/javascript/reference/index/
+---Easy to call like: figure:plot{x, y, ...}
+---Shorthand options:
+---1=x-values
+---2=y-values
+---ls=line-style (options: "-", ".", "--")
+---lw=line-width (numeric value - default 2)
+---ms=marker-size (numeric value - default 2)
+---c or color=sets color of line and marker
+---mode=shorter mode forms (options: "m"="markers", "l"="lines", "m+l" or "l+m"="markers+lines")
+---title=sets/updates the title of the figure
+---xlabel=sets/updates the xlabel of the figure
+---ylabel=sets/updates the ylabel of the figure
+---@param trace table
+function figure.plot(self, trace)
+    if not trace["line"] then
+        trace["line"] = {}
+    end 
+    if not trace["marker"] then
+        trace["marker"] = {}
+    end 
+    local layout = {}
+    for name, val in pairs(trace) do
+        if name == "ls" then
+            trace["line"]["dash"] = dash_style[val]
+            trace[name] = nil
+        elseif name == "lw" then
+            trace["line"]["width"] = val
+            trace[name] = nil
+        elseif name == "title" then
+            layout["title"] = val
+            trace[name] = nil
+        elseif name == 1 then
+            trace["x"] = val
+            trace[name] = nil
+        elseif name == 2 then
+            trace["y"] = val
+            trace[name] = nil
+        elseif name == "ms" then
+            trace["marker"]["size"] = val
+            trace[name] = nil
+        elseif name == "c" or name == "color" then
+            trace["marker"]["color"] = val
+            trace["line"]["color"] = val
+            trace[name] = nil
+        elseif name == "mode" and mode_shorthand[val] then
+            trace["mode"] = mode_shorthand[val]
+        elseif name == "xlabel" then
+            layout["xaxis"] = {title={text=val}}
+            trace[name] = nil
+        elseif name == "ylabel" then
+            layout["yaxis"] = {title={text=val}}
+            trace[name] = nil
+        end
+    end
+    self:add_trace(trace)
+    self:update_layout(layout)
+    return self
 end
 
 function figure.update_layout(self, layout)
