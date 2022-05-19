@@ -5,61 +5,63 @@ A simple interface for plotting with [Plotly](https://plotly.com/javascript/) in
 
 Installation with `luarocks`:
 
-    luarocks install plotly.lua
+    luarocks install plotly
 
 The interface in written in pure Lua and requires internet for rending the plots
 
 ## Usages
-The module comes with two main functions, namely: `plotly.tofile` and `plotly.show`. 
+Some examples can be found here: https://github.com/kenloen/plotly.lua/tree/main/example  
 
-Using `plotly.show`:
+The module comes with two approches for creating figures/plots.  
+
+### plotly.plot
+
+The fastest interface is trying to mimic the plotting interface in Matlab and Matplotlib, using the `plotly.plot{x, y, ...}` or `fig.plot{x, y, ...}` api.
+
 ```lua
 plotly = require("plotly")
 
--- Example from: https://plotly.com/javascript/line-charts/
-
--- Creating data traces
-trace1 = {
-    x = { 1, 2, 3, 4 }; 
-    y = { 10, 15, 13, 17 }; 
-    mode = 'markers';
-    }
-
-trace2 = {
-    x = { 2, 3, 4, 5 };
-    y = { 16, 5, 11, 9 };
-    mode = 'lines'
-    }
-
-trace3 = {
-    x = { 1, 2, 3, 4 }; 
-    y = { 12, 9, 15, 12 }; 
-    mode = 'lines+markers'
-    }
-
--- Combining data in a table (with no field names)
-data = { trace1, trace2, trace3 }
-
--- Adding plot title
-layout = { title = 'Line and Scatter Plot'}
-
--- show the plot in the browser (temporary file is created)
-plotly.show(data, layout)
+plotly.plot{{ 1, 2, 3, 4 }, { 10, 15, 13, 17 }, 
+            xlabel="x-axis", ylabel="y-axis",
+            title="Using plotly.plot"}:show()
 ```
-Or showing and saving a file:
+Which will open the plot in the browser.  
+Examples are here:
+- [Using plotly.plot](https://github.com/kenloen/plotly.lua/tree/main/example/plotly_plot.lua)
+- [Using plotly.figure.plot](https://github.com/kenloen/plotly.lua/tree/main/example/figure_plot.lua)
+
+### plotly.figure
+The other one is a simple wrapper around the plain [plotly.js](https://plotly.com/javascript/reference/index/) where the data for a plot is provided though JSON data such as `data` (containing data about traces), `layout` (containing data about figure layout, e.g. title, axis-title, size), and `config` (containing data about figure configurations e.g. responsive sizing, interactive title editing).
+
 ```lua
--- show the plot in the browser and save to line-charts.html 
-plotly.show(data, layout, nil, "line-charts.html")
-```
-Using `plotly.tofile`:
-```lua
--- Save the plot as an HTML file 
-plotly.tofile("line-charts.html", data, layout)
-```
+plotly = require("plotly")
 
-## Update
-- Change input to table input (`plotly.plot(x,y)` -> `plotly.plot{x,y, ls=1}`)
-- Make `plotly.plot` interface (using matlab style interface (`x`,`y`, keyword: `ls`, `lw`, `name`, ...))
-- Add `plotly.figure` method returning metatable with methods for adding traces (e.g `fig:plot{x,y}`, `fig:scatter{x,y}`) as well as layout and config (`fig:update_layout{title="Plot"}`) and saving to file or displaying (`fig:tofile{filename}`, `fig:show()`)
-- Add methods for saving or rendering multiple plots in the same file (`plotly.tofile("plot.html", {fig1, fig2})`, `plotly.show({fig1, fig2})`)
-- Extend figure metatable above to have Holoviews style layout rendering (e.g `fig1*fig2`-> overlaying plots, `fig1+fig2` -> subplots with additional methods for layout gird `(fig1+fig2+fig3+fig4).cols(2)` -> 2x2 grid)
+-- Figure with all traces, layout and config
+-- From= https://plotly.com/javascript/line-charts/
+fig1 = plotly.figure()
+
+fig1:add_trace { x = { 1, 2, 3, 4 }, y = { 10, 15, 13, 17 }, mode = 'markers' }
+
+fig1:add_trace { x = { 2, 3, 4, 5 }, y = { 16, 5, 11, 9 }, mode = 'lines' }
+
+fig1:add_trace { x = { 1, 2, 3, 4 }, y = { 12, 9, 15, 12 }, mode = 'lines+markers' }
+
+fig1:update_layout { title = 'Line and Scatter Plot with scroll-zoom and editable titles' }
+
+fig1:update_config { scrollZoom = true, editable = true }
+
+fig1:show()
+```
+Examples are here:
+- [Using plotly.figure.add_trace](https://github.com/kenloen/plotly.lua/tree/main/example/figure_add_trace.lua)
+- [Using plotly.show (mutiple figure in the same document)](https://github.com/kenloen/plotly.lua/tree/main/example/multiple_figures.lua)
+
+### Saving to file
+The examples above are using `:show()` to show the plot in the browser. If instead a file should be saved the `:tofile(filename)` method should be used. Using the example with `fig1` from above:
+```lua
+fig1:tofile("awesome_plot.html")
+```
+or if both a file should be saved and opening in the browser:
+```lua
+fig1:tofile("awesome_plot.html"):show()
+```

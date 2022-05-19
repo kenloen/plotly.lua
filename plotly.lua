@@ -1,18 +1,19 @@
 local json = require ("dkjson")
 
-plotly = {}
+local plotly = {}
 
-plotly.cdn_str = "<script src='https://cdn.plot.ly/plotly-2.9.0.min.js'></script>"
+plotly.cdn_main = "<script src='https://cdn.plot.ly/plotly-2.9.0.min.js'></script>"
 plotly.header = ""
 plotly.body = ""
 plotly.id_count = 1
 plotly.sleep_time = 1
 
-
-function plotly.tohtml(figues)
-    
+---Converts a set of figures to an HTML string
+---@param figues table
+---@return string
+function plotly.tohtml(figues)    
     -- Create header tags
-    header = "<head>\n"..plotly.cdn_str.."\n"..plotly.header.."\n</head>\n"
+    header = "<head>\n"..plotly.cdn_main.."\n"..plotly.header.."\n".."\n</head>\n"
 
     -- Create body tags
     plots = ""
@@ -23,6 +24,9 @@ function plotly.tohtml(figues)
     return header.."<body>\n"..plots.."</body>"
 end
 
+---Saves a set of figures to filename
+---@param filename string
+---@param figures table
 function plotly.tofile(filename, figures)
     html_str = plotly.tohtml(figures)
     file = io.open(filename, "w")
@@ -30,6 +34,8 @@ function plotly.tofile(filename, figures)
     file:close()
 end
 
+---Shows a set of figures in the browser
+---@param figures table
 function plotly.show(figures)
     filename = "_temp.html"
     plotly.tofile(filename, figures)
@@ -78,6 +84,7 @@ local figure = {}
 
 ---Adding a trace for the figure. All options can be found here: https://plotly.com/javascript/reference/index/
 ---Easy to call like: figure:add_trace{x=x, y=y, ...}
+---@param self table
 ---@param trace table
 function figure.add_trace(self, trace)
     self["data"][#self["data"]+1] = trace
@@ -86,21 +93,27 @@ end
 local dash_style = {["-"] = "solid", [":"] = "dot", ["--"] = "dash"}
 local mode_shorthand = {["m"] = "markers", ["l"]="lines", ["m+l"]="lines+markers", ["l+m"]="lines+markers"}
 
----Adding a trace for the figure with shorthand for common options (similar to matlab or matplotlib). 
----All js options can be found here: https://plotly.com/javascript/reference/index/
----Easy to call like: figure:plot{x, y, ...}
----Shorthand options:
----1=x-values
----2=y-values
----ls=line-style (options: "-", ".", "--")
----lw=line-width (numeric value - default 2)
----ms=marker-size (numeric value - default 2)
----c or color=sets color of line and marker
----mode=shorter mode forms (options: "m"="markers", "l"="lines", "m+l" or "l+m"="markers+lines")
----title=sets/updates the title of the figure
----xlabel=sets/updates the xlabel of the figure
----ylabel=sets/updates the ylabel of the figure
+
+--[[Adding a trace for the figure with shorthand for common options (similar to matlab or matplotlib).   
+All js options can be found here: https://plotly.com/javascript/reference/index/  
+Easy to call like: figure:plot{x, y, ...}  
+Shorthand options:  
+| key | explanation |
+| :----: | :---------: |
+| *1* | x-values  |
+| *2* | y-values   |
+| *ls* | line-style (options: "-", ".", "--")  |
+| *lw* | line-width (numeric value - default 2) |
+| *ms* | marker-size (numeric value - default 2) |
+| *c* or *color* | sets color of line and marker |
+| *mode* | shorter mode forms (options: "m"="markers", "l"="lines", "m+l" or "l+m"="markers+lines") |
+| *title* | sets/updates the title of the figure |
+| *xlabel* | sets/updates the xlabel of the figure |
+| *ylabel* | sets/updates the ylabel of the figure |
+]]
+---@param self plotly.figure
 ---@param trace table
+---@return plotly.figure
 function figure.plot(self, trace)
     if not trace["line"] then
         trace["line"] = {}
@@ -147,12 +160,24 @@ function figure.plot(self, trace)
     return self
 end
 
+---Updates the plotly figure layout (options can be seen here: https://plotly.com/javascript/reference/layout/)
+---@param self table
+---@param layout table
 function figure.update_layout(self, layout)
     for name, val in pairs(layout) do
         self["layout"][name] = val
     end    
 end
 
+---Updates the plotly figure config (options can be seen here: https://plotly.com/javascript/configuration-options/)
+---@param self table
+---@param config table
+function figure.update_config(self, config)
+    for name, val in pairs(config) do
+        self["config"][name] = val
+    end    
+end
+ 
 function figure.toplotstring(self)
     -- Converting input
     data_str = json.encode (self["data"])
@@ -175,7 +200,7 @@ end
 
 function figure.tohtmlstring(self)
     -- Create header tags
-    header = "<head>\n"..plotly.cdn_str.."\n"..plotly.header.."\n</head>\n"
+    header = "<head>\n"..plotly.cdn_main.."\n"..plotly.header.."\n</head>\n"
 
     -- Create body tags
     plot = self:toplotstring()
@@ -183,13 +208,19 @@ function figure.tohtmlstring(self)
     return header.."<body>\n"..plot.."</body>"
 end
 
+---Saves the figure to an HTML file with *filename*
+---@param self table
+---@param filename string
 function figure.tofile(self, filename)
     html_str = self:tohtmlstring()
     file = io.open(filename, "w")
     file:write(html_str)
     file:close()
+    return self
 end
 
+---Opens/shows the plot in the browser
+---@param self plotly.figure
 function figure.show(self)
     filename = "_temp.html"
     self:tofile(filename)
@@ -205,6 +236,31 @@ end
 function plotly.figure()
     local fig = {data={}, layout={}, config={}}
     setmetatable(fig, {__index=figure})
+    return fig
+end
+
+--[[Adding a trace for the figure with shorthand for common options (similar to matlab or matplotlib).   
+All js options can be found here: https://plotly.com/javascript/reference/index/  
+Easy to call like: plotly.plot{x, y, ...}  
+Shorthand options:  
+| key | explanation |
+| :----: | :---------: |
+| *1* | x-values  |
+| *2* | y-values   |
+| *ls* | line-style (options: "-", ".", "--")  |
+| *lw* | line-width (numeric value - default 2) |
+| *ms* | marker-size (numeric value - default 2) |
+| *c* or *color* | sets color of line and marker |
+| *mode* | shorter mode forms (options: "m"="markers", "l"="lines", "m+l" or "l+m"="markers+lines") |
+| *title* | sets/updates the title of the figure |
+| *xlabel* | sets/updates the xlabel of the figure |
+| *ylabel* | sets/updates the ylabel of the figure |
+]]
+---@param trace table
+---@return plotly.figure
+function plotly.plot(trace)
+    fig = plotly.figure()
+    fig:plot(trace)
     return fig
 end
 
