@@ -1,5 +1,5 @@
 package = "plotly"
-version = "dev-1"
+version = "dev-2"
 source = {
    url = "git+https://github.com/kenloen/plotly.lua.git"
 }
@@ -70,7 +70,8 @@ plotly.tofile("line-charts.html", data, layout)
 }
 dependencies = {
    "lua >= 5.1",
-   "dkjson >= 2.5"
+   "dkjson >= 2.5",
+   "lfs" >= 1.7.0"
 }
 build = {
    type = "builtin",
