@@ -1,5 +1,5 @@
 package = "plotly"
-version = "dev-1"
+version = "dev-2"
 source = {
    url = "git+https://github.com/kenloen/plotly.lua.git"
 }
